@@ -1,5 +1,4 @@
 #!/bin/bash
-
 case $TS_VERSION in
   LATEST)
     JSON=$(wget -q -O - https://www.teamspeak.com/versions/server.json)
@@ -10,19 +9,21 @@ case $TS_VERSION in
     URL="http://files.teamspeak-services.com/releases/server/${TS_VERSION}/teamspeak3-server_linux_alpine-${TS_VERSION}.tar.bz2"
     ;;
 esac
+
 cd /data
 
-download=0
-if [ ! -e version ]; then
-  download=1
+download="0"
+if [ ! -e /.teamspeak3-version ]; then
+  download="1"
 else
-  read version <version
+  read version </.teamspeak3-version
+  echo "Installed TeamSpeak version found: $version"
   if [ "$version" != "$TS_VERSION" ]; then
-    download=1
+    download="1"
   fi
 fi
 
-if [ "$download" -eq 1 ]; then
+if [ "$download" == "1" ]; then
   echo "Downloading TeamSpeak ${TS_VERSION} from ${URL} ..."
   wget -q -O teamspeak3-server.tar.gz ${URL} \
   && tar -j -x -f teamspeak3-server.tar.gz --strip-components=1 \
