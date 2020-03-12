@@ -1,14 +1,10 @@
 #!/bin/bash
 
-case $TS_VERSION in
-  LATEST)
-    export TS_VERSION=`/get-version`
-    ;;
-esac
+JSON=$(wget -q -O - https://www.teamspeak.com/versions/server.json)
+export TS_VERSION=`echo $JSON | jq -r ".linux.x86_64.version"`
+URL=`echo $JSON | jq -r ".linux.x86_64.mirrors.\"teamspeak.com\"" | sed 's/amd64/alpine/'`
 
 cd /data
-
-TARFILE=teamspeak3-server_linux_amd64-${TS_VERSION}.tar.bz2
 
 download=0
 if [ ! -e version ]; then
@@ -21,16 +17,16 @@ else
 fi
 
 if [ "$download" -eq 1 ]; then
-  echo "Downloading ${TARFILE} ..."
-  wget -q http://files.teamspeak-services.com/releases/server/${TS_VERSION}/${TARFILE} \
-  && tar -j -x -f ${TARFILE} --strip-components=1 \
-  && rm -f ${TARFILE} \
+  echo "Downloading ${URL} ..."
+  wget -q -O teamspeak3-server.tar.gz ${URL} \
+  && tar -j -x -f teamspeak3-server.tar.gz --strip-components=1 \
+  && rm -f teamspeak3-server.tar.gz \
   && echo $TS_VERSION >version
 fi
 
 export LD_LIBRARY_PATH=".:/data:/data/redist"
-
 TS3ARGS=""
+
 if [ -e /data/ts3server.ini ]; then
   TS3ARGS="inifile=/data/ts3server.ini"
 else
@@ -47,4 +43,3 @@ if [ "accept" = "$TS3SERVER_LICENSE" ]; then
 fi
 
 exec ./ts3server $TS3ARGS
-
