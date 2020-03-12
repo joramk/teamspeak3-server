@@ -1,9 +1,15 @@
 #!/bin/bash
 
-JSON=$(wget -q -O - https://www.teamspeak.com/versions/server.json)
-export TS_VERSION=`echo $JSON | jq -r ".linux.x86_64.version"`
-URL=`echo $JSON | jq -r ".linux.x86_64.mirrors.\"teamspeak.com\"" | sed 's/amd64/alpine/'`
-
+case $TS_VERSION in
+  LATEST)
+    JSON=$(wget -q -O - https://www.teamspeak.com/versions/server.json)
+    export TS_VERSION=`echo $JSON | jq -r ".linux.x86_64.version"`
+    URL=`echo $JSON | jq -r ".linux.x86_64.mirrors.\"teamspeak.com\"" | sed 's/amd64/alpine/'`
+    ;;
+  *)
+    URL="http://files.teamspeak-services.com/releases/server/${TS_VERSION}/teamspeak3-server_linux_alpine-${TS_VERSION}.tar.bz2"
+    ;;
+esac
 cd /data
 
 download=0
@@ -17,7 +23,7 @@ else
 fi
 
 if [ "$download" -eq 1 ]; then
-  echo "Downloading ${URL} ..."
+  echo "Downloading TeamSpeak ${TS_VERSION} from ${URL} ..."
   wget -q -O teamspeak3-server.tar.gz ${URL} \
   && tar -j -x -f teamspeak3-server.tar.gz --strip-components=1 \
   && rm -f teamspeak3-server.tar.gz \
